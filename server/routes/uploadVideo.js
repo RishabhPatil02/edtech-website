@@ -3,6 +3,8 @@ const router=express.Router();
 const mongoose=require('mongoose');
 const Video=require('../models/Video');
 const multer = require('multer');
+const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
 
 var date;
 
@@ -32,6 +34,19 @@ const upload2=multer({storage:storage2});
 router.post("/video",upload1.single("videoFile"), async (req, res) => {
   
     console.log(req.file.path)
+    const file_path = date+"_"+"video"+"_"+req.body.video_name;
+    // Compression settings
+    ffmpeg(file_path)
+        .outputOptions('-c:v libx264')
+        .outputOptions('-crf 20')
+        .outputOptions('-preset veryfast') 
+        .output(file_path)
+        .on('end', () => {
+            fs.unlinkSync(file_path);
+            res.send('Compression complete');
+        })
+        .run();
+  
     const newVideo = new Video({
       title:req.body.title,
       description:req.body.description,
